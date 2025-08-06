@@ -2,7 +2,7 @@ from dal import autocomplete
 from django import forms
 from django.urls import reverse_lazy
 from django_select2.forms import Select2MultipleWidget
-from .models import Pessoa, Cliente, Funcionario, Servico, ServicoFuncionarioHorario, Agendamento
+from .models import Pessoa, Cliente, Funcionario, Servico, ServicoFuncionarioHorario, Agendamento, DataHorario
 
 pessoa_autocomplete_widget = autocomplete.ModelSelect2(
     url=reverse_lazy('agendamento:pessoa-disponivel-autocomplete'),
@@ -47,6 +47,15 @@ class ServicoFuncionarioHorarioAdminForm(forms.ModelForm):
         label='Serviços que Executa',
     )
 
+    data_horario = forms.ModelChoiceField(
+        queryset=DataHorario.objects.all(),
+        label='Data',
+        widget=autocomplete.ModelSelect2(
+            url=reverse_lazy('agendamento:data-ordenada-autocomplete'),
+            attrs={'data-placeholder': 'Busque pela data (ex: 25/12/2025)'}
+        )
+    )
+
     class Meta:
         model = ServicoFuncionarioHorario
         fields = '__all__'
@@ -55,9 +64,9 @@ class ServicoFuncionarioHorarioAdminForm(forms.ModelForm):
 class AgendamentoAdminForm(forms.ModelForm):
     servico_funcionario_horario = forms.ModelChoiceField(
         queryset=ServicoFuncionarioHorario.objects.all(),
-        help_text= 'Busque por horário, funcionário e/ou serviço',
+        help_text= 'Busque por data, funcionário ou serviço',
         widget=autocomplete.ModelSelect2(
-            url=reverse_lazy('agendamento:vaga-disponivel-odernada-autocomplete'),
+            url=reverse_lazy('agendamento:vaga-disponivel-ordenada-autocomplete'),
 )
     )
 

@@ -13,7 +13,13 @@ urlpatterns = [
     path(
         'vaga-disponivel-ordenada-autocomplete/',
         views.VagaDisponivelOrdenadaAutocomplete.as_view(),
-        name='vaga-disponivel-odernada-autocomplete',
+        name='vaga-disponivel-ordenada-autocomplete',
+    ),
+
+    path(
+        'data-ordenada-autocomplete/',
+        views.DataOrdenadaAutocomplete.as_view(),
+        name='data-ordenada-autocomplete',
     ),
 
     path(

@@ -10,7 +10,7 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidde
 from django.template.loader import get_template
 from django.utils import timezone
 
-from .models import Pessoa, ServicoFuncionarioHorario, Agendamento
+from .models import Pessoa, ServicoFuncionarioHorario, Agendamento, DataHorario
 
 
 class PessoaDisponivelAutocomplete(autocomplete.Select2QuerySetView):
@@ -45,14 +45,74 @@ class VagaDisponivelOrdenadaAutocomplete(autocomplete.Select2QuerySetView):
         )
 
         if self.q:
+            date_q = Q()
+            search_term = self.q.strip()
+
+            formatos= [
+                '%d/%m/%Y',
+                '%d/%m',
+            ]
+
+            for formato in formatos:
+                try:
+                    date_obj = datetime.datetime.strptime(search_term, formato)
+
+                    if formato == '%d/%m':
+                        current_year = timezone.now().year
+                        date_obj = date_obj.replace(year=current_year)
+
+                    date_q = Q(data_horario__data_horario__date=date_obj.date())
+
+                except ValueError:
+                    continue
+
             qs = qs.filter(
                 Q(servico__nome_servico__icontains=self.q) |
                 Q(funcionario__pessoa__nome_completo__icontains=self.q) |
-                Q(data_horario__data_horario__icontains=self.q)
+                date_q
             )
 
-
         return qs.order_by('data_horario__data_horario', 'funcionario__pessoa__nome_completo')
+
+
+class DataOrdenadaAutocomplete(autocomplete.Select2QuerySetView):
+    def get_queryset(self):
+        if not self.request.user.is_authenticated:
+            return DataHorario.objects.none()
+
+        qs = DataHorario.objects.filter(
+            ativo=True,
+            data_horario__gte=timezone.now()
+        )
+
+        if self.q:
+            date_q = Q()
+            search_term = self.q.strip()
+
+            formatos= [
+                '%d/%m/%Y',
+                '%d/%m',
+            ]
+
+            for formato in formatos:
+                try:
+                    date_obj = datetime.datetime.strptime(search_term, formato)
+
+                    if formato == '%d/%m':
+                        current_year = timezone.now().year
+                        date_obj = date_obj.replace(year=current_year)
+
+                    date_q = Q(data_horario__date=date_obj.date())
+
+                except ValueError:
+                    continue
+
+            qs = qs.filter(
+                date_q
+            )
+
+        return qs.order_by('data_horario')
+
 
 
 def gerar_relatorio_pdf(request):
