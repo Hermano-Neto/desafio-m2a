@@ -93,7 +93,9 @@ class Command(BaseCommand):
             Agendamento
         ]
 
-        content_types = [ContentType.objects.get_for_model(model) for model in app_models]
+        content_types = []
+        for model in app_models:
+            content_types.append(ContentType.objects.get_for_model(model))
 
         perm_recepcionista = Permission.objects.filter(content_type__in=content_types)
         grupo_recepcionista, _ = Group.objects.get_or_create(name='Recepcionista')
@@ -218,9 +220,13 @@ class Command(BaseCommand):
             'valor': 1200.00, 'duracao_minutos': 360},
         ]
 
-        servicos = [Servico(**data) for data in servicos_data]
+        servicos = []
+        for data in servicos_data:
+            servicos.append(Servico(**data))
+
         Servico.objects.bulk_create(servicos)
         self.stdout.write(f"{len(servicos)} serviços criados.")
+
         return list(Servico.objects.all())
 
     def _criar_pessoas(self):
@@ -239,8 +245,12 @@ class Command(BaseCommand):
                 data_nascimento=faker.date_of_birth(minimum_age=16, maximum_age=80),
             ) for _ in range(TOTAL_PESSOAS)
         ]
-        Pessoa.objects.bulk_create(pessoas_a_criar, batch_size=1000)
+        Pessoa.objects.bulk_create(
+            pessoas_a_criar,
+            batch_size=1000
+        )
         self.stdout.write(f"{TOTAL_PESSOAS} pessoas criadas.")
+
         return list(Pessoa.objects.all())
 
     def _criar_usuarios_e_perfis(self, pessoas):
@@ -258,7 +268,9 @@ class Command(BaseCommand):
 
         senha_padrao = 'teste1234'
 
-        pessoa_dono = pessoas.pop()
+        pessoas.pop()
+
+        # Cria o usuário do dono
         user_dono = User.objects.create_user(
             username='Dono',
             password=senha_padrao,
@@ -266,8 +278,9 @@ class Command(BaseCommand):
         )
         user_dono.groups.add(grupo_dono)
 
+        # Cria os (as) receptionistas
         for i in range(NUM_RECEPCIONISTAS):
-            pessoa_rec = pessoas.pop()
+            pessoas.pop()
             user_rec = User.objects.create_user(
                 username=f'recepcionista_{i + 1}',
                 password=senha_padrao,
@@ -277,6 +290,7 @@ class Command(BaseCommand):
 
         funcionarios_com_login = []
 
+        # Cria os funcionários
         for i in range(NUM_FUNCIONARIOS_USUARIOS):
             pessoa_func = pessoas.pop()
             user_func = User.objects.create_user(
@@ -293,7 +307,10 @@ class Command(BaseCommand):
         todos_funcionarios = funcionarios_com_login + outros_funcionarios
         Funcionario.objects.bulk_create(todos_funcionarios)
 
-        clientes = [Cliente(pessoa=p) for p in pessoas]
+        clientes = []
+        for p in pessoas:
+            clientes.append(Cliente(pessoa=p))
+
         Cliente.objects.bulk_create(clientes)
 
         self.stdout.write(
@@ -314,10 +331,12 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING("Nenhum funcionário encontrado para atribuir serviços."))
             return
 
+        # Atribuição de serviço ao funcionário
         for servico in servicos_lista:
             funcionario_escolhido = random.choice(funcionarios)
             funcionario_escolhido.servico.add(servico)
 
+        # limitador de quantidade de serviços
         for func in funcionarios:
             servicos_atuais_count = func.servico.count()
 
@@ -372,6 +391,7 @@ class Command(BaseCommand):
         horarios_todos = list(DataHorario.objects.all())
         vagas_criadas = []
 
+        # Distribuição de horário para funcionários, com lógica básica de dias de trabalho
         for func in funcionarios:
             padrao_trabalho = random.choice(['integral', 'manha', 'tarde', 'fds'])
 

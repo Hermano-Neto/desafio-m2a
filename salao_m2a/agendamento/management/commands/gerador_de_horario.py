@@ -39,9 +39,9 @@ class Command(BaseCommand):
         current_date = data_inicial
 
         while current_date <= data_limite:
-            if current_date.weekday() < 6:
+            if current_date.weekday() < 6:  # Segunda a Sábado (0-5)
                 start_hour, end_hour = 8, 19
-            else:
+            else:  # Domingo (6)
                 start_hour, end_hour = 9, 15
 
             for hour in range(start_hour, end_hour):

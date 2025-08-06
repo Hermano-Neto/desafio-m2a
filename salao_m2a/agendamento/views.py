@@ -139,12 +139,14 @@ def gerar_relatorio_pdf(request):
 
     if not (request.user.is_superuser or request.user.groups.filter(name='Dono').exists()):
         messages.error(request, "Você não tem permissão para gerar este relatório.")
+
         return HttpResponseForbidden("Acesso Negado")
 
     params = request.GET
     data_inicio_str = params.get('servico_funcionario_horario__data_horario__data_horario__range__gte')
     data_fim_str = params.get('servico_funcionario_horario__data_horario__data_horario__range__lte')
 
+    # Verificação se o usuário selecionou as datas no filtro, caso não, envia uma mensagem de aviso
     if not data_inicio_str or not data_fim_str:
         messages.error(
             request,
@@ -163,6 +165,7 @@ def gerar_relatorio_pdf(request):
     data_inicio_relatorio = start_date
     data_fim_relatorio = end_date.date()
 
+    # Encurta o caminho da query, evitando diversas buscas com joins
     queryset = Agendamento.objects.filter(
         status='CONCLUIDO',
         **filters
@@ -174,6 +177,7 @@ def gerar_relatorio_pdf(request):
     total_geral_ganhos = 0
     funcionarios_data = defaultdict(lambda: {'concluidos': 0, 'ganhos': 0})
 
+    # Faz a busca e insere a quantidade de concluídos e de ganhos por funcionário
     for agendamento in queryset:
         valor_agendamento = agendamento.servico_funcionario_horario.servico.all().aggregate(
             total=Sum('valor')
