@@ -625,3 +625,11 @@ class AgendamentoAdmin(admin.ModelAdmin):
     @admin.display(description='Data e Horário', ordering='servico_funcionario_horario__data_horario')
     def get_data_horario(self, obj):
         return obj.servico_funcionario_horario.data_horario
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['user_can_generate_report'] = (
+                request.user.is_superuser or
+                request.user.groups.filter(name='Dono').exists()
+        )
+        return super().changelist_view(request, extra_context=extra_context)

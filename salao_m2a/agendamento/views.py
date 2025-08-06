@@ -6,7 +6,7 @@ from django.contrib import messages
 from xhtml2pdf import pisa
 from dal import autocomplete
 from django.db.models import Q, Sum
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden
 from django.template.loader import get_template
 from django.utils import timezone
 
@@ -56,6 +56,10 @@ class VagaDisponivelOrdenadaAutocomplete(autocomplete.Select2QuerySetView):
 
 
 def gerar_relatorio_pdf(request):
+    if not (request.user.is_superuser or request.user.groups.filter(name='Dono').exists()):
+        messages.error(request, "Você não tem permissão para gerar este relatório.")
+        return HttpResponseForbidden("Acesso Negado")
+
     params = request.GET
     data_inicio_str = params.get('servico_funcionario_horario__data_horario__data_horario__range__gte')
     data_fim_str = params.get('servico_funcionario_horario__data_horario__data_horario__range__lte')
