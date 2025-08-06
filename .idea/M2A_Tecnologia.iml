@@ -5,7 +5,7 @@
       <sourceFolder url="file://$MODULE_DIR$/salao_m2a" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.13 virtualenv at D:\Pessoal\Projetos\M2A_Tecnologia\desafio-m2a\.venv" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.13 (desafio-m2a)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

@@ -15,4 +15,10 @@ urlpatterns = [
         views.VagaDisponivelOrdenadaAutocomplete.as_view(),
         name='vaga-disponivel-odernada-autocomplete',
     ),
+
+    path(
+        'relatorio-pdf/',
+        views.gerar_relatorio_pdf,
+        name='relatorio-pdf'
+    ),
 ]
