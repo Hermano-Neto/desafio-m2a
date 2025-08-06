@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from django.contrib import admin
-from django.db.models import Sum, Q
+from django.db.models import Sum
 from django.utils import timezone
 from rangefilter.filters import DateRangeFilter
 
