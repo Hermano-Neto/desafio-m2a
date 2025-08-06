@@ -1,10 +1,11 @@
 from datetime import timedelta
 
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.db.models import Sum
 from django.utils import timezone
 from rangefilter.filters import DateRangeFilter
 
+from .choices import StatusAgendamento
 from .filtros import ValorRangeFilter
 from .models import (
     Pessoa,
@@ -606,6 +607,21 @@ class AgendamentoAdmin(admin.ModelAdmin):
 
         return list_filter
 
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if request.user.is_superuser or request.user.groups.filter(name='Recepcionista').exists():
+            actions['marcar_como_concluido'] = (
+                self.marcar_como_concluido,
+                'marcar_como_concluido',
+                self.marcar_como_concluido.short_description,
+            )
+            actions['marcar_como_cancelado'] = (
+                self.marcar_como_cancelado,
+                'marcar_como_cancelado',
+                self.marcar_como_cancelado.short_description,
+            )
+        return actions
+
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
         form.base_fields['servico_funcionario_horario'].label = 'Vaga de Atendimento'
@@ -633,3 +649,13 @@ class AgendamentoAdmin(admin.ModelAdmin):
                 request.user.groups.filter(name='Dono').exists()
         )
         return super().changelist_view(request, extra_context=extra_context)
+
+    @admin.action(description='Marcar como Concluído')
+    def marcar_como_concluido(self, request, queryset):
+        updated = queryset.update(status=StatusAgendamento.CONCLUIDO)
+        self.message_user(request, f'{updated} agendamento(s) foram marcados como "Concluído".', messages.SUCCESS)
+
+    @admin.action(description='Marcar como Cancelado')
+    def marcar_como_cancelado(self, request, queryset):
+        updated = queryset.update(status=StatusAgendamento.CANCELADO)
+        self.message_user(request, f'{updated} agendamento(s) foram marcados como "Cancelado".', messages.SUCCESS)
