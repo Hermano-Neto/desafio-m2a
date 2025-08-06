@@ -18,6 +18,7 @@ O desenvolvimento foi guiado pela necessidade de uma ferramenta funcional, clara
 - [Tecnologias Utilizadas](#tecnologias-utilizadas)
 - [Configuração do Ambiente e Instalação](#configuração-do-ambiente-e-instalação)
 - [Fluxo de Uso Básico](#fluxo-de-uso-básico)
+- [Usuários e Níveis de Acesso](#usuários-e-níveis-de-acesso)
 - [Licença](#licença)
 
 ## Funcionalidades
@@ -129,11 +130,14 @@ Para realizar um agendamento completo, o sistema segue um fluxo de trabalho lóg
 1.  **Cadastro de Pessoas**
     - Acesse a seção `Pessoas` e cadastre os indivíduos que interagirão com o sistema. Este é o cadastro base que será utilizado para criar Clientes e Funcionários.
 
+
 2.  **Definição de Papéis (Cliente e Funcionário)**
     - Após cadastrar uma pessoa, acesse `Clientes` ou `Funcionários` para associar a pessoa a um desses papéis. O campo de busca com autocomplete permite encontrar a pessoa cadastrada facilmente.
 
+
 3.  **Cadastro de Serviços**
     - Na seção `Serviços`, defina os serviços que o salão oferece (ex: "Corte de Cabelo", "Manicure"), especificando seus respectivos valores e durações.
+
 
 4.  **Criação dos Horários de Atendimento**
     - Para definir a grade de horários do salão, você tem duas opções:
@@ -141,12 +145,35 @@ Para realizar um agendamento completo, o sistema segue um fluxo de trabalho lóg
         - **Manual:** Cadastre datas e horas específicas na seção `Datas e horários`.
     - *Nota: O script de geração automática pode ser facilmente ajustado para se adequar a diferentes regras de negócio da empresa.*
 
+
 5.  **Criação das Vagas de Atendimento**
     - Esta é a etapa que define a agenda. Em `Vagas de Atendimento`, você conecta um `Funcionário` a uma `Data e Horário` e aos `Serviços` que ele pode realizar naquele momento. Isso cria um espaço de atendimento disponível para agendamento.
+
 
 6.  **Realização do Agendamento**
     - Finalmente, na seção `Agendamentos`, selecione um `Cliente` e uma `Vaga de Atendimento`. O sistema foi otimizado para mostrar apenas as vagas que ainda estão livres, utilizando um campo de busca inteligente para facilitar a marcação do serviço e evitar conflitos de horário.
     
+
+## Usuários e Níveis de Acesso
+
+O script `popular_banco` cria automaticamente perfis de usuário com permissões pré-definidas para facilitar os testes.
+
+* **Dono**
+    -   **Usuário:** `Dono`
+    -   **Senha:** `teste1234`
+    -   **Acesso:** Perfil de administrador com amplos poderes. Possui permissão para gerenciar a maioria dos módulos (Clientes, Serviços, Agendamentos). 
+  
+
+* **Recepcionista**
+    -   **Usuários:** `recepcionista_1`, `recepcionista_2`, etc.
+    -   **Senha:** `teste1234`
+    -   **Acesso:** Perfil operacional com permissão total para criar, visualizar, editar e deletar registros em todos os módulos do sistema. É o perfil destinado ao gerenciamento do dia a dia da agenda.
+
+
+* **Funcionário**
+    -   **Usuários:** `funcionario_1`, `funcionario_2`, etc.
+    -   **Senha:** `teste1234`
+    -   **Acesso:** Perfil com acesso de **apenas leitura** (view-only). Pode visualizar os dados do sistema, como sua própria agenda e serviços, mas não pode criar, editar ou apagar registros.
 
 ## Licença
 
