@@ -4,6 +4,11 @@ from django.core.validators import RegexValidator
 from .choices import StatusAgendamento
 
 class BaseModel(models.Model):
+    """
+    Um modelo abstrato base que fornece campos comuns de auditoria ('ativo', 'data_cadastro', 'data_atualizacao')
+    para outros modelos.
+    """
+
     ativo = models.BooleanField(
         verbose_name='Ativo',
         default=True
@@ -22,6 +27,10 @@ class BaseModel(models.Model):
 
 
 class Pessoa(BaseModel):
+    """
+    Armazena os dados pessoais básicos de um indivíduo, que pode ser um cliente ou um funcionário. Inclui validações
+    simples para CPF e celular.
+    """
     validador_celular = RegexValidator(
         regex=r'^\(\d{2}\) \d{5}-\d{4}$',
         message="O número de celular deve estar no formato: (XX) XXXXX-XXXX"
@@ -69,6 +78,9 @@ class Pessoa(BaseModel):
 
     @property
     def nome_e_sobrenome(self):
+        """
+         Uma property que captura o primeiro e o último nome do nome completo para uma representação mais curta.
+         """
         if not self.nome_completo:
             return ""
         partes = self.nome_completo.strip().split()
@@ -80,6 +92,7 @@ class Pessoa(BaseModel):
 
 
 class Cliente(BaseModel):
+    """Representa um cliente do salão, vinculado a um registro de Pessoa."""
     pessoa = models.OneToOneField(
         Pessoa,
         verbose_name='Pessoa',
@@ -95,6 +108,7 @@ class Cliente(BaseModel):
 
 
 class Servico(BaseModel):
+    """Armazena os detalhes de um serviço oferecido pelo salão."""
     nome_servico = models.CharField(
         verbose_name='Nome do serviço',
         max_length=100
@@ -114,6 +128,7 @@ class Servico(BaseModel):
 
 
 class Funcionario(BaseModel):
+    """Representa um funcionário do salão, vinculado a uma Pessoa e aos Serviços que executa."""
     pessoa = models.OneToOneField(
         Pessoa,
         verbose_name='Pessoa',
@@ -129,6 +144,7 @@ class Funcionario(BaseModel):
 
 
 class DataHorario(BaseModel):
+    """Armazena um timestamp específico para um possível agendamento."""
     data_horario = models.DateTimeField(
         verbose_name='Data'
     )
@@ -138,6 +154,10 @@ class DataHorario(BaseModel):
 
 
 class ServicoFuncionarioHorario(BaseModel):
+    """
+    Representa uma "vaga" na agenda, conectando um Funcionário, os Serviços que ele pode realizar e um Horário
+    específico. Garante que um funcionário só possa ter uma vaga por horário.
+    """
     funcionario = models.ForeignKey(
         Funcionario,
         verbose_name='Funcionario',
@@ -166,6 +186,9 @@ class ServicoFuncionarioHorario(BaseModel):
 
 
 class Agendamento(BaseModel):
+    """
+    Modelo central que representa o agendamento de um Cliente para uma Vaga de Atendimento específica.
+    """
     cliente = models.ForeignKey(
         Cliente,
         verbose_name='Cliente',

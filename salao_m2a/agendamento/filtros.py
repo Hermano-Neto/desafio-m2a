@@ -1,6 +1,9 @@
 from django.contrib import admin
 
 class ValorRangeFilter(admin.SimpleListFilter):
+    """
+    Cria um filtro customizado para o Django Admin que permite filtrar por faixas de preço (valor) predefinidas.
+    """
     title = 'Faixa de Preço'
     parameter_name = 'valor'
 

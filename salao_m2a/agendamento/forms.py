@@ -10,6 +10,10 @@ pessoa_autocomplete_widget = autocomplete.ModelSelect2(
 )
 
 class ClienteAdminForm(forms.ModelForm):
+    """
+    Formulário para o admin do modelo Cliente. Substitui o campo de seleção padrão de 'pessoa' por um widget de
+    autocomplete para facilitar a busca de pessoas disponíveis.
+    """
     pessoa = forms.ModelChoiceField(
         queryset=Pessoa.objects.all(),
         widget=pessoa_autocomplete_widget
@@ -21,12 +25,13 @@ class ClienteAdminForm(forms.ModelForm):
 
 
 class FuncionarioAdminForm(forms.ModelForm):
+    """
+    Formulário para o admin do modelo Funcionario. Customiza o campo 'pessoa' com um widget de autocomplete e o campo
+    'servico' com um widget de seleção múltipla aprimorado.
+    """
     pessoa = forms.ModelChoiceField(
         queryset=Pessoa.objects.all(),
-        widget=autocomplete.ModelSelect2(
-            url=reverse_lazy('agendamento:pessoa-disponivel-autocomplete'),
-            attrs={'data-placeholder': 'Busque pelo nome ou CPF'}
-        )
+        widget=pessoa_autocomplete_widget
     )
 
     servico = forms.ModelMultipleChoiceField(
@@ -41,6 +46,10 @@ class FuncionarioAdminForm(forms.ModelForm):
 
 
 class ServicoFuncionarioHorarioAdminForm(forms.ModelForm):
+    """
+    Formulário para o admin de Vagas de Atendimento (ServicoFuncionarioHorario). Aplica widgets de seleção aprimorados
+    para os campos 'servico' e 'data_horario', facilitando a criação da vaga de atendimento.
+    """
     servico = forms.ModelMultipleChoiceField(
         queryset=Servico.objects.all(),
         widget=Select2MultipleWidget,
@@ -62,6 +71,10 @@ class ServicoFuncionarioHorarioAdminForm(forms.ModelForm):
 
 
 class AgendamentoAdminForm(forms.ModelForm):
+    """
+    Formulário para o admin do modelo Agendamento. Otimiza o processo de agendamento ao substituir o campo de seleção de
+    'servico_funcionario_horario' por um widget de autocomplete avançado.
+    """
     servico_funcionario_horario = forms.ModelChoiceField(
         queryset=ServicoFuncionarioHorario.objects.all(),
         help_text= 'Busque por data, funcionário ou serviço',
@@ -73,4 +86,3 @@ class AgendamentoAdminForm(forms.ModelForm):
     class Meta:
         model = Agendamento
         fields = '__all__'
-

@@ -14,6 +14,11 @@ from .models import Pessoa, ServicoFuncionarioHorario, Agendamento, DataHorario
 
 
 class PessoaDisponivelAutocomplete(autocomplete.Select2QuerySetView):
+    """
+    Fornece uma view de autocomplete para Pessoas que ainda não são nem Clientes, nem Funcionários, permitindo a busca
+     por nome, celular ou CPF e que não apareça a pessoa que já foi selecionada como Cliente ou Funcionário
+    """
+
     def get_queryset(self):
         if not self.request.user.is_authenticated:
             return Pessoa.objects.none()
@@ -34,6 +39,12 @@ class PessoaDisponivelAutocomplete(autocomplete.Select2QuerySetView):
 
 
 class VagaDisponivelOrdenadaAutocomplete(autocomplete.Select2QuerySetView):
+    """
+    Fornece uma view de autocomplete para Vagas de Atendimento (ServicoFuncionarioHorario) que estão ativas, disponíveis
+     e futuras. Permite a busca por data (formatos DD/MM e DD/MM/YYYY), nome de serviço ou nome de funcionário e ordena
+     data seguido do nome da pessoa.
+    """
+
     def get_queryset(self):
         if not self.request.user.is_authenticated:
             return ServicoFuncionarioHorario.objects.none()
@@ -76,6 +87,11 @@ class VagaDisponivelOrdenadaAutocomplete(autocomplete.Select2QuerySetView):
 
 
 class DataOrdenadaAutocomplete(autocomplete.Select2QuerySetView):
+    """
+    Fornece uma view de autocomplete para Datas e Horários (DataHorario) que estão ativos e ainda estão por vir. Permite
+     a busca por data nos formatos DD/MM e DD/MM/YYYY.
+    """
+
     def get_queryset(self):
         if not self.request.user.is_authenticated:
             return DataHorario.objects.none()
@@ -116,6 +132,11 @@ class DataOrdenadaAutocomplete(autocomplete.Select2QuerySetView):
 
 
 def gerar_relatorio_pdf(request):
+    """
+    Gera um relatório em PDF com o desempenho de agendamentos concluídos dentro de um intervalo de datas selecionadas
+    pelo usuário. Acesso restrito a superusuários e membros do grupo 'Dono'. Exige que o filtro de data seja aplicado.
+    """
+
     if not (request.user.is_superuser or request.user.groups.filter(name='Dono').exists()):
         messages.error(request, "Você não tem permissão para gerar este relatório.")
         return HttpResponseForbidden("Acesso Negado")

@@ -30,10 +30,19 @@ TOTAL_CLIENTES = TOTAL_PESSOAS - (NUM_DONOS + NUM_RECEPCIONISTAS + TOTAL_FUNCION
 
 
 class Command(BaseCommand):
+    """
+    Comando do Django para limpar e popular o banco de dados com dados de teste.
+    """
+
     help = 'Limpa e popula o banco de dados com dados de teste completos, incluindo usuários e permissões.'
 
     @transaction.atomic
     def handle(self, *args, **options):
+        """
+        Ponto de entrada principal para a execução do comando. Organiza a chamada dos métodos auxiliares na ordem
+        correta para popular o banco.
+        """
+
         self.stdout.write("Iniciando a configuração completa do salão...")
 
         self._limpar_dados()
@@ -49,6 +58,11 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('Configuração do salão concluída com sucesso!'))
 
     def _limpar_dados(self):
+        """
+        Remove todos os dados das tabelas do app 'agendamento', bem como usuários (exceto superusuários) e grupos, para
+        garantir um novo começo.
+        """
+
         self.stdout.write("Limpando dados existentes...")
         Agendamento.objects.all().delete()
         ServicoFuncionarioHorario.objects.all().delete()
@@ -62,30 +76,43 @@ class Command(BaseCommand):
         self.stdout.write("Dados limpos.")
 
     def _criar_grupos_e_permissoes(self):
+        """
+        Cria os grupos de usuários (Dono, Recepcionista e Funcionário) atribuindo cada um a um conjunto específico de
+        permissões.
+        """
+
         self.stdout.write("Criando grupos e definindo permissões...")
 
-        # Obtendo todos os modelos do app 'agendamento'
-        app_models = [Pessoa, Cliente, Funcionario, Servico, DataHorario, ServicoFuncionarioHorario, Agendamento]
+        app_models = [
+            Pessoa,
+            Cliente,
+            Funcionario,
+            Servico,
+            DataHorario,
+            ServicoFuncionarioHorario,
+            Agendamento
+        ]
+
         content_types = [ContentType.objects.get_for_model(model) for model in app_models]
 
-        # Permissões para RECEPCIONISTA (CRUD em tudo do app)
         perm_recepcionista = Permission.objects.filter(content_type__in=content_types)
         grupo_recepcionista, _ = Group.objects.get_or_create(name='Recepcionista')
         grupo_recepcionista.permissions.set(perm_recepcionista)
 
-        # Permissões para FUNCIONÁRIO (Apenas visualização)
-        perm_funcionario = Permission.objects.filter(content_type__in=content_types, codename__startswith='view_')
+        perm_funcionario = Permission.objects.filter(
+            content_type__in=content_types,
+            codename__startswith='view_'
+        )
         grupo_funcionario, _ = Group.objects.get_or_create(name='Funcionário')
         grupo_funcionario.permissions.set(perm_funcionario)
 
-        # Permissões para DONO (Tudo, exceto algumas exceções)
         perm_dono = Permission.objects.filter(content_type__in=content_types)
         perm_excluir_dono = Permission.objects.filter(
             content_type__in=[
                 ContentType.objects.get_for_model(DataHorario),
                 ContentType.objects.get_for_model(ServicoFuncionarioHorario)
             ]
-        ).exclude(codename__startswith='view_')  # Exclui add, change, delete
+        ).exclude(codename__startswith='view_')
 
         perm_dono_final = perm_dono.exclude(pk__in=perm_excluir_dono.values_list('pk', flat=True))
         grupo_dono, _ = Group.objects.get_or_create(name='Dono')
@@ -94,9 +121,12 @@ class Command(BaseCommand):
         self.stdout.write("Grupos e permissões criados.")
 
     def _criar_servicos(self):
+        """
+        Popula o banco de dados com uma lista predefinida de serviços e combos oferecidos pelo salão.
+        """
+
         self.stdout.write("Criando serviços...")
         servicos_data = [
-            # --- CABELO ---
             {'nome_servico': 'Corte de Cabelo (Feminino)', 'valor': 90.00, 'duracao_minutos': 60},
             {'nome_servico': 'Corte de Cabelo (Masculino)', 'valor': 50.00, 'duracao_minutos': 30},
             {'nome_servico': 'Corte de Cabelo (Infantil)', 'valor': 45.00, 'duracao_minutos': 30},
@@ -187,12 +217,17 @@ class Command(BaseCommand):
             'nome_servico': 'Pacote Noiva Ouro: Penteado (c/ prévia) + Maquiagem (c/ prévia) + Manicure + Pedicure + Design de Sobrancelha',
             'valor': 1200.00, 'duracao_minutos': 360},
         ]
+
         servicos = [Servico(**data) for data in servicos_data]
         Servico.objects.bulk_create(servicos)
         self.stdout.write(f"{len(servicos)} serviços criados.")
         return list(Servico.objects.all())
 
     def _criar_pessoas(self):
+        """
+        Cria um grande volume de registros de Pessoas com dados fictícios usando a biblioteca Faker.
+        """
+
         self.stdout.write("Criando pessoas...")
         faker = Faker('pt_BR')
         pessoas_a_criar = [
@@ -209,6 +244,11 @@ class Command(BaseCommand):
         return list(Pessoa.objects.all())
 
     def _criar_usuarios_e_perfis(self, pessoas):
+        """
+        Converte os registros de Pessoa em usuários do sistema (Dono, Recepcionista e Funcionário) e perfis
+        (Funcionario e Cliente).
+        """
+
         self.stdout.write("Criando usuários, funcionários e clientes...")
         random.shuffle(pessoas)
 
@@ -218,33 +258,41 @@ class Command(BaseCommand):
 
         senha_padrao = 'teste1234'
 
-        # Criar Dono
         pessoa_dono = pessoas.pop()
-        user_dono = User.objects.create_user(username='Dono', password=senha_padrao, is_staff=True)
+        user_dono = User.objects.create_user(
+            username='Dono',
+            password=senha_padrao,
+            is_staff=True
+        )
         user_dono.groups.add(grupo_dono)
 
-        # Criar Recepcionistas
         for i in range(NUM_RECEPCIONISTAS):
             pessoa_rec = pessoas.pop()
-            user_rec = User.objects.create_user(username=f'recepcionista_{i + 1}', password=senha_padrao, is_staff=True)
+            user_rec = User.objects.create_user(
+                username=f'recepcionista_{i + 1}',
+                password=senha_padrao,
+                is_staff=True
+            )
             user_rec.groups.add(grupo_recepcionista)
 
-        # Criar Funcionários com login de usuário
         funcionarios_com_login = []
+
         for i in range(NUM_FUNCIONARIOS_USUARIOS):
             pessoa_func = pessoas.pop()
-            user_func = User.objects.create_user(username=f'funcionario_{i + 1}', password=senha_padrao, is_staff=True)
+            user_func = User.objects.create_user(
+                username=f'funcionario_{i + 1}',
+                password=senha_padrao,
+                is_staff=True
+            )
             user_func.groups.add(grupo_funcionario)
             funcionarios_com_login.append(Funcionario(pessoa=pessoa_func))
 
-        # Criar Funcionários adicionais sem login (apenas perfil)
         outros_funcionarios = [Funcionario(pessoa=pessoas.pop()) for _ in
                                range(TOTAL_FUNCIONARIOS_PERFIL - NUM_FUNCIONARIOS_USUARIOS)]
 
         todos_funcionarios = funcionarios_com_login + outros_funcionarios
         Funcionario.objects.bulk_create(todos_funcionarios)
 
-        # O resto das pessoas se tornam clientes
         clientes = [Cliente(pessoa=p) for p in pessoas]
         Cliente.objects.bulk_create(clientes)
 
@@ -253,9 +301,12 @@ class Command(BaseCommand):
         self.stdout.write(f"Perfis criados: {TOTAL_FUNCIONARIOS_PERFIL} Funcionários, {len(clientes)} Clientes.")
 
     def _atribuir_servicos_especializados(self, servicos):
-        self.stdout.write("Atribuindo serviços de forma aleatória e controlada...")
+        """
+        Distribui os serviços entre os funcionários de forma controlada, garantindo que cada serviço seja coberto por
+        pelo menos um profissional e que cada profissional tenha um conjunto variado de serviços.
+        """
 
-        # Converte para lista para poder usar random.choice e random.sample
+        self.stdout.write("Atribuindo serviços de forma aleatória e controlada...")
         funcionarios = list(Funcionario.objects.all())
         servicos_lista = list(servicos)
 
@@ -263,35 +314,31 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING("Nenhum funcionário encontrado para atribuir serviços."))
             return
 
-        # Passo 1: Garantir que cada serviço seja coberto por pelo menos um funcionário.
-        # Para cada serviço, escolhemos um funcionário aleatório para aprendê-lo.
         for servico in servicos_lista:
             funcionario_escolhido = random.choice(funcionarios)
             funcionario_escolhido.servico.add(servico)
 
-        # Passo 2: Adicionar mais alguns serviços aleatórios a cada funcionário, respeitando o limite de 10.
         for func in funcionarios:
-            # Conta quantos serviços o funcionário já tem (do passo 1)
             servicos_atuais_count = func.servico.count()
 
-            # Se ele já tem 10 ou mais, não fazemos nada e pulamos para o próximo
             if servicos_atuais_count >= 10:
                 continue
 
-            # Calcula quantos serviços ainda podemos adicionar (no máximo até 10)
             limite_para_adicionar = 10 - servicos_atuais_count
-
-            # Escolhe um número aleatório de serviços extras para adicionar
             num_servicos_extras = random.randint(0, limite_para_adicionar)
 
             if num_servicos_extras > 0:
-                # Pega uma amostra aleatória de serviços para adicionar
                 servicos_extras = random.sample(servicos_lista, k=num_servicos_extras)
                 func.servico.add(*servicos_extras)
 
         self.stdout.write("Serviços distribuídos com sucesso.")
 
     def _criar_horarios_disponiveis(self):
+        """
+        Cria todos os slots de DataHorario em intervalos de 30 minutos para um período extenso (passado e futuro),
+        servindo como base para as vagas de atendimento.
+        """
+
         self.stdout.write("Criando datas e horários disponíveis...")
         start_date = timezone.now().date() - timedelta(days=90)
         end_date = timezone.now().date() + timedelta(days=180)
@@ -314,29 +361,35 @@ class Command(BaseCommand):
         DataHorario.objects.bulk_create(horarios, batch_size=1000)
         self.stdout.write(f"{len(horarios)} slots de data/horário criados.")
 
-
     def _criar_vagas_de_atendimento(self):
+        """
+        Cria as Vagas de Atendimento, associando funcionários a horários específicos com base em padrões de trabalho
+        aleatórios e atribuindo serviços ou combos de serviços a cada vaga.
+        """
+
         self.stdout.write("Criando vagas de atendimento (com possíveis combos)...")
         funcionarios = list(Funcionario.objects.filter(ativo=True))
         horarios_todos = list(DataHorario.objects.all())
         vagas_criadas = []
 
-        # Primeiro, criamos as vagas sem os serviços M2M
         for func in funcionarios:
             padrao_trabalho = random.choice(['integral', 'manha', 'tarde', 'fds'])
 
             for horario in horarios_todos:
                 dia_da_semana = horario.data_horario.weekday()
                 hora = horario.data_horario.hour
-
                 trabalha_neste_horario = False
-                if padrao_trabalho == 'integral' and dia_da_semana < 5:  # Seg-Sex
+
+                if padrao_trabalho == 'integral' and dia_da_semana < 5:
                     trabalha_neste_horario = True
+
                 elif padrao_trabalho == 'manha' and dia_da_semana < 6 and hora < 13:
                     trabalha_neste_horario = True
+
                 elif padrao_trabalho == 'tarde' and dia_da_semana < 6 and hora >= 13:
                     trabalha_neste_horario = True
-                elif padrao_trabalho == 'fds' and dia_da_semana >= 5:  # Sab-Dom
+
+                elif padrao_trabalho == 'fds' and dia_da_semana >= 5:
                     trabalha_neste_horario = True
 
                 if trabalha_neste_horario:
@@ -345,37 +398,31 @@ class Command(BaseCommand):
                         data_horario=horario
                     ))
 
-        # Usamos bulk_create para criar as vagas de forma eficiente
         ServicoFuncionarioHorario.objects.bulk_create(vagas_criadas, batch_size=1000)
         self.stdout.write(f"{len(vagas_criadas)} vagas base criadas.")
 
         self.stdout.write("Atribuindo serviços e combos às vagas...")
-        # Agora, atribuímos os serviços às vagas já criadas
         todas_as_vagas = ServicoFuncionarioHorario.objects.all()
         for vaga in todas_as_vagas.iterator():
             servicos_do_funcionario = list(vaga.funcionario.servico.all())
 
-            # --- CORREÇÃO AQUI ---
-            # Se este funcionário não tiver nenhum serviço, simplesmente
-            # pulamos para a próxima vaga, não há o que atribuir.
             if not servicos_do_funcionario:
                 continue
-            # --- FIM DA CORREÇÃO ---
 
-            # Decide aleatoriamente se será um combo ou serviço único
-            if random.random() < 0.3 and len(servicos_do_funcionario) > 1:  # 30% de chance de ser um combo
-                # Cria um combo com 2 serviços aleatórios
+            if random.random() < 0.3 and len(servicos_do_funcionario) > 1:
                 servicos_para_vaga = random.sample(servicos_do_funcionario, k=min(len(servicos_do_funcionario), 2))
+
             else:
-                # Cria uma vaga com um serviço único
                 servicos_para_vaga = random.sample(servicos_do_funcionario, k=1)
-
-            # Usa o método .set() para adicionar as relações ManyToMany
             vaga.servico.set(servicos_para_vaga)
-
         self.stdout.write("Serviços e combos atribuídos.")
 
     def _criar_agendamentos(self):
+        """
+        Simula o uso real do sistema criando um grande número de agendamentos, ocupando uma porcentagem significativa
+        das vagas disponíveis e atribuindo status aleatórios a eles.
+        """
+
         self.stdout.write("Criando agendamentos...")
         vagas_disponiveis = list(ServicoFuncionarioHorario.objects.all())
         clientes_ativos = list(Cliente.objects.filter(ativo=True))
@@ -384,7 +431,6 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING("Não há vagas ou clientes ativos para criar agendamentos."))
             return
 
-        # Agendar aproximadamente 90% das vagas
         total_agendamentos = int(len(vagas_disponiveis) * 0.90)
         vagas_para_agendar = random.sample(vagas_disponiveis, k=total_agendamentos)
 
