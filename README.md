@@ -78,11 +78,14 @@ Siga os passos abaixo para rodar o projeto localmente.
 
 **2. Clone o Repositório:**
    ```bash
+   
    git clone https://github.com/Hermano-Neto/desafio-m2a.git
+   cd desafio-m2a
    ```
 
 **3. Crie e Ative o Ambiente Virtual:**
    ```bash
+   
    # Criar o ambiente virtual
    python -m venv .venv
 
@@ -95,24 +98,24 @@ Siga os passos abaixo para rodar o projeto localmente.
 
 **4. Instale as Dependências:**
    ```bash
+   
    pip install -r requirements.txt
    ```
 
 **5. Aplique as Migrações do Banco de Dados:**
    Este comando cria a estrutura do banco de dados.
    ```bash
+   
+   cd salao_m2a
    python manage.py migrate
    ```
 
 **6. Povoamento do Banco de Dados (Opcional, mas Recomendado):**
    Para poupar tempo de cadastro manual, você pode usar os scripts para popular o banco.
    ```bash
+   
    # 1. Popula o banco com dados de exemplo (clientes, funcionários, etc.)
    python manage.py popular_banco
-
-
-   # 2. Gera os horários de atendimento para os próximos 6 meses
-   python manage.py gerador_de_horario
    ```
    *Nota: O script `popular_banco` já cria usuários. Se preferir criar o seu próprio superusuário, pule esta etapa e use o comando `python manage.py createsuperuser`.*
 
